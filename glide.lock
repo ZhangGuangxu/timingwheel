@@ -1,0 +1,6 @@
+hash: bcf05d7522d233618abc06ee493107dcc2cbe424a49d062a66034a18751cf1b8
+updated: 2018-05-21T11:17:21.8451137+08:00
+imports:
+- name: github.com/ZhangGuangxu/circularqueue
+  version: 87b946895486fab5fd9318b0fab583d754d61711
+testImports: []

@@ -1,0 +1,4 @@
+package: timingwheel
+import:
+- package: github.com/ZhangGuangxu/circularqueue
+  version: 87b946895486fab5fd9318b0fab583d754d61711
