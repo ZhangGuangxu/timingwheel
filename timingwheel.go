@@ -1,9 +1,9 @@
 package timingwheel
 
 import (
-	"sync"
 	"errors"
 	ccq "github.com/ZhangGuangxu/circularqueue"
+	"sync"
 	"time"
 )
 
@@ -16,17 +16,17 @@ type Releaser interface {
 var errInvalidDuration = errors.New("invalid duration")
 
 type itemCon struct {
-    qa *ccq.CircularQueue
-    qb *ccq.CircularQueue
+	qa *ccq.CircularQueue
+	qb *ccq.CircularQueue
 }
 
 type slotCon []itemCon
 
 // TimingWheel is a data structure that manages some items which may be out of time soon.
 type TimingWheel struct {
-    stepTime time.Duration // Every step time, the wheel rolls one index forward.
-    
-    mux      sync.Mutex // for slots and curIndex
+	stepTime time.Duration // Every step time, the wheel rolls one index forward.
+
+	mux      sync.Mutex // for slots and curIndex
 	slots    slotCon
 	curIndex int
 }
@@ -41,20 +41,20 @@ func NewTimingWheel(max time.Duration, slotCnt int) (*TimingWheel, error) {
 		return nil, errInvalidDuration
 	}
 
-    n := max.Nanoseconds()
-    c := int64(slotCnt)
-    if n < c {
-        return nil, errInvalidDuration
-    }
-    s := n/c
-    if n%c > 0 {
-        s++
-    }
+	n := max.Nanoseconds()
+	c := int64(slotCnt)
+	if n < c {
+		return nil, errInvalidDuration
+	}
+	s := n / c
+	if n%c > 0 {
+		s++
+	}
 
-    slots := make(slotCon, slotCnt)
+	slots := make(slotCon, slotCnt)
 	for i := range slots {
-        slots[i].qa = ccq.NewCircularQueue()
-        slots[i].qb = ccq.NewCircularQueue()
+		slots[i].qa = ccq.NewCircularQueue()
+		slots[i].qb = ccq.NewCircularQueue()
 	}
 
 	tw := &TimingWheel{
@@ -66,15 +66,15 @@ func NewTimingWheel(max time.Duration, slotCnt int) (*TimingWheel, error) {
 
 // AddItem adds an item to this wheel.
 func (tw *TimingWheel) AddItem(r Releaser) {
-    tw.mux.Lock()
-    defer tw.mux.Unlock()
+	tw.mux.Lock()
+	defer tw.mux.Unlock()
 	tw.slots[tw.curIndex].qa.Push(r)
 }
 
 // Run rolls this wheel.
 // Run has a dead loop.
 func (tw *TimingWheel) Run(shouldQuit func() bool, deferFunc func()) {
-    defer deferFunc()
+	defer deferFunc()
 
 	ticker := time.NewTicker(tw.stepTime)
 
@@ -84,8 +84,8 @@ func (tw *TimingWheel) Run(shouldQuit func() bool, deferFunc func()) {
 		}
 
 		select {
-        case <-ticker.C:
-            tw.stepForward()
+		case <-ticker.C:
+			tw.stepForward()
 		}
 	}
 }
@@ -100,7 +100,7 @@ type timingwheelObserver interface {
 // runWithStepObserver needs two step observers.
 // This function is for ease of unit test.
 func (tw *TimingWheel) runWithStepObserver(shouldQuit func() bool, deferFunc func(), ob timingwheelObserver) {
-    defer deferFunc()
+	defer deferFunc()
 
 	ticker := time.NewTicker(tw.stepTime)
 
@@ -110,18 +110,18 @@ func (tw *TimingWheel) runWithStepObserver(shouldQuit func() bool, deferFunc fun
 		}
 
 		select {
-        case <-ticker.C:
-            ob.beforeStep()
-            tw.stepForwardWithObserver(ob)
-            ob.afterStep()
+		case <-ticker.C:
+			ob.beforeStep()
+			tw.stepForwardWithObserver(ob)
+			ob.afterStep()
 		}
 	}
 }
 
 // move one index forward and check items in new index.
 func (tw *TimingWheel) stepForward() {
-    tw.mux.Lock()
-    defer tw.mux.Unlock()
+	tw.mux.Lock()
+	defer tw.mux.Unlock()
 
 	idx := tw.curIndex + 1
 	if idx >= len(tw.slots) {
@@ -129,9 +129,9 @@ func (tw *TimingWheel) stepForward() {
 	}
 	tw.curIndex = idx
 
-    curSlot := tw.slots[idx]
-    qa := curSlot.qa
-    qb := curSlot.qb
+	curSlot := tw.slots[idx]
+	qa := curSlot.qa
+	qb := curSlot.qb
 
 	for !qa.IsEmpty() {
 		v, _ := qa.Pop()
@@ -139,17 +139,17 @@ func (tw *TimingWheel) stepForward() {
 			if r.ShouldRelease() {
 				r.Release()
 			} else {
-                qb.Push(v)
+				qb.Push(v)
 			}
 		}
-    }
-    
-    curSlot.qa, curSlot.qb = qb, qa
+	}
+
+	curSlot.qa, curSlot.qb = qb, qa
 }
 
 func (tw *TimingWheel) stepForwardWithObserver(ob timingwheelObserver) {
-    tw.mux.Lock()
-    defer tw.mux.Unlock()
+	tw.mux.Lock()
+	defer tw.mux.Unlock()
 
 	idx := tw.curIndex + 1
 	if idx >= len(tw.slots) {
@@ -157,35 +157,35 @@ func (tw *TimingWheel) stepForwardWithObserver(ob timingwheelObserver) {
 	}
 	tw.curIndex = idx
 
-    curSlot := tw.slots[idx]
-    qa := curSlot.qa
-    qb := curSlot.qb
+	curSlot := tw.slots[idx]
+	qa := curSlot.qa
+	qb := curSlot.qb
 
 	for !qa.IsEmpty() {
 		v, _ := qa.Pop()
 		if r, ok := v.(Releaser); ok {
 			if r.ShouldRelease() {
-                r.Release()
-                ob.afterRelease()
+				r.Release()
+				ob.afterRelease()
 			} else {
-                qb.Push(v)
-                ob.afterMove()
+				qb.Push(v)
+				ob.afterMove()
 			}
 		}
-    }
-    
-    curSlot.qa, curSlot.qb = qb, qa
+	}
+
+	curSlot.qa, curSlot.qb = qb, qa
 }
 
 // itemCount returns the item count in this wheel.
 // This function is just for unit test.
 func (tw *TimingWheel) itemCount() int {
-    tw.mux.Lock()
-    defer tw.mux.Unlock()
+	tw.mux.Lock()
+	defer tw.mux.Unlock()
 
-    var total int
-    for _, slot := range tw.slots {
-        total += slot.qa.Len()
-    }
-    return total
+	var total int
+	for _, slot := range tw.slots {
+		total += slot.qa.Len()
+	}
+	return total
 }

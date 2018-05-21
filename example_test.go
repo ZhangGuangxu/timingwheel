@@ -1,16 +1,16 @@
 package timingwheel
 
 import (
-	"log"
-	"time"
-	"sync"
 	"fmt"
+	"log"
+	"sync"
+	"time"
 )
 
 type wheelObserver struct {
-	step int
-	releaseCnt int
-	moveCnt int
+	step          int
+	releaseCnt    int
+	moveCnt       int
 	afterStepFunc func(w *wheelObserver)
 }
 
@@ -76,7 +76,7 @@ func ExampleTimingWheel() {
 		defer deferFunc()
 
 		ticker := time.NewTicker(10 * time.Millisecond)
-		
+
 		for {
 			select {
 			case <-quitAdder:
@@ -131,7 +131,7 @@ func ExampleTimingWheel2() {
 		defer deferFunc()
 
 		ticker := time.NewTicker(10 * time.Millisecond)
-		
+
 		for {
 			select {
 			case <-quitAdder:

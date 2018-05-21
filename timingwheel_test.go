@@ -1,9 +1,9 @@
 package timingwheel
 
 import (
+	"sync"
 	"testing"
 	"time"
-	"sync"
 )
 
 var count = 1000
@@ -27,7 +27,7 @@ func (i *Item) Release() {
 
 }
 
-func TestWheel(test *testing.T)  {
+func TestWheel(test *testing.T) {
 	slotCnt := 100
 	w, err := NewTimingWheel(maxTime, slotCnt)
 	if err != nil {
@@ -58,7 +58,7 @@ func TestWheel(test *testing.T)  {
 
 		ticker := time.NewTicker(1 * time.Millisecond)
 		endT := time.Now().Add(1 * time.Second)
-		
+
 		for time.Now().Before(endT) {
 			select {
 			case <-ticker.C:
@@ -150,7 +150,7 @@ func TestTimingwheel2(test *testing.T) {
 
 		ticker := time.NewTicker(1 * time.Millisecond)
 		endT := time.Now().Add(2 * time.Second)
-		
+
 		for time.Now().Before(endT) {
 			select {
 			case <-ticker.C:
